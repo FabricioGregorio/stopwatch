@@ -1,222 +1,230 @@
-let oldHoras, oldMin, oldSeg;
-let intervalId = null;
-let tempoRestante = 0;
-let pausado = false;
+(function () {
+    'use strict';
 
-function estadoInicial() {
-    const inputs = document.querySelectorAll('.inpTimer');
-
-    document.getElementById("contagemFinal").style.display = "none";
-    document.getElementById("main").style.display = "inline-block";
-    document.body.style.backgroundColor = "#242424";
-    document.getElementById("contagemFinal").style.color = "#46FFBE";
-
-    inputs.forEach(input => {
-        input.dataset.opacity = 0.7;
-        input.style.opacity = 0.7;
-        input.focus();
-    });
-
-    document.getElementById("Bpause").style.display = "none";
-}
-
-function fullscreen() {
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    } else {
-        document.documentElement.requestFullscreen();
-    }
-}
-
-function editar() {
-    oldHoras = document.getElementById("hours").value;
-    oldMin = document.getElementById("min").value;
-    oldSeg = document.getElementById("sec").value;
-    const inputs = document.querySelectorAll('.inpTimer');
+    // Cache DOM elements
+    const hoursInput = document.getElementById('hours');
+    const minutesInput = document.getElementById('min');
+    const secondsInput = document.getElementById('sec');
+    const inputs = Array.from(document.querySelectorAll('.inpTimer'));
+    const editButton = document.getElementById('Bedit');
     const confirmButton = document.getElementById('Bconfirm');
     const denyButton = document.getElementById('Bdeny');
-    const allButtons = document.querySelectorAll('#buttons button');
+    const playButton = document.getElementById('Bplay');
+    const pauseButton = document.getElementById('Bpause');
+    const stopButton = document.getElementById('Bstop');
+    const fullscreenButton = document.getElementById('Bfull');
+    const allButtons = Array.from(document.querySelectorAll('#buttons button'));
+    const mainContainer = document.getElementById('main');
+    const finalCountDisplay = document.getElementById('finalCount');
 
-    inputs.forEach(input => {
-        input.readOnly = false;
-        input.focus();
-    });
+    // State variables
+    let oldHours, oldMinutes, oldSeconds;
+    let timerId = null;
+    let remainingTime = 0;
+    let paused = false;
+    let endTime = 0;
+    let lastRemainingSec = null;
 
-    allButtons.forEach(button => {
-        button.style.display = 'none';
-    });
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    confirmButton.style.display = 'flex';
-    denyButton.style.display = 'flex';
-
-    validarInputs();
-}
-
-function confirmar() {
-    document.getElementById("Bconfirm").style.display = "none";
-    document.getElementById("Bdeny").style.display = "none";
-
-    document.getElementById("Bfull").style.display = "flex";
-    document.getElementById("Bedit").style.display = "flex";
-    document.getElementById("Bstop").style.display = "flex";
-    document.getElementById("Bplay").style.display = "flex";
-
-    document.querySelectorAll(".inpTimer").forEach(inp => {
-        inp.readOnly = true;
-    });
-}
-
-function negar() {
-    document.getElementById("hours").value = oldHoras;
-    document.getElementById("min").value = oldMin;
-    document.getElementById("sec").value = oldSeg;
-
-    document.querySelectorAll(".inpTimer").forEach(inp => {
-        inp.readOnly = true;
-    });
-
-    document.getElementById("Bconfirm").style.display = "none";
-    document.getElementById("Bdeny").style.display = "none";
-
-    document.getElementById("Bfull").style.display = "flex";
-    document.getElementById("Bedit").style.display = "flex";
-    document.getElementById("Bstop").style.display = "flex";
-    document.getElementById("Bplay").style.display = "flex";
-}
-
-function validarInputs() {
-    const hours = document.getElementById("hours");
-    const min = document.getElementById("min");
-    const sec = document.getElementById("sec");
-
-    [hours, min, sec].forEach(input => {
-        input.addEventListener("input", () => {
-            input.value = input.value.replace(/\D/g, "");
-
-            let val = parseInt(input.value);
-            if (isNaN(val)) val = 0;
-
-            if (input.id === "hours" && val > 23) input.value = 23;
-            if ((input.id === "min" || input.id === "sec") && val > 59) input.value = 59;
-
-            if (input.value.length === 1) input.value = "0" + input.value;
-            if (input.value.length === 0) input.value = "00";
-        });
-
-        input.addEventListener("blur", () => {
-            if (input.value.length === 1) input.value = "0" + input.value;
-            if (input.value.length === 0) input.value = "00";
-        });
-    });
-}
-
-function iniciar() {
-    document.getElementById("Bpause").style.display = "flex";
-
-    const inputs = document.querySelectorAll('.inpTimer');
-
-    inputs.forEach(input => {
-        input.dataset.opacity = 1;
-        input.style.opacity = 1;
-    });
-
-    if (intervalId !== null) return;
-
-    const horas = parseInt(document.getElementById("hours").value) || 0;
-    const minutos = parseInt(document.getElementById("min").value) || 0;
-    const segundos = parseInt(document.getElementById("sec").value) || 0;
-
-    tempoRestante = (horas * 3600) + (minutos * 60) + segundos;
-
-    if (tempoRestante <= 0) {
-        estadoInicial();
-        return;
+    // Utility to show/hide buttons via CSS class
+    function toggleButtons(showIds = [], hideIds = []) {
+        showIds.forEach(id => document.getElementById(id).classList.remove('hidden'));
+        hideIds.forEach(id => document.getElementById(id).classList.add('hidden'));
     }
 
-    pausado = false;
+    // Set initial UI state
+    function initializeState() {
+        toggleButtons([], ['Bpause']);
+        finalCountDisplay.style.display = 'none';
+        mainContainer.style.display = 'inline-block';
+        document.body.style.backgroundColor = '#242424';
+        finalCountDisplay.style.color = '#46FFBE';
 
-    intervalId = setInterval(() => {
-        if (pausado === false && tempoRestante > 0) {
-            tempoRestante--;
-            if (tempoRestante === 10) {
-                ocultarInterfaceFinal();
+        inputs.forEach(input => {
+            input.dataset.opacity = 0.7;
+            input.style.opacity = 0.7;
+            input.readOnly = true;
+            input.backgroundColor = '#242424';
+            input.focus();
+        });
+    }
+
+    // Fullscreen toggle
+    function toggleFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen();
+        }
+    }
+
+    // Enable edit mode
+    function enterEditMode() {
+        oldHours = hoursInput.value;
+        oldMinutes = minutesInput.value;
+        oldSeconds = secondsInput.value;
+
+        inputs.forEach(inp => inp.readOnly = false);
+        allButtons.forEach(btn => btn.classList.add('hidden'));
+        toggleButtons(['Bconfirm', 'Bdeny'], []);
+    }
+
+    // Confirm edits
+    function confirmEdit() {
+        inputs.forEach(inp => inp.readOnly = true);
+        toggleButtons(['Bfull', 'Bedit', 'Bstop', 'Bplay'], ['Bconfirm', 'Bdeny']);
+    }
+
+    // Deny edits
+    function denyEdit() {
+        hoursInput.value = oldHours;
+        minutesInput.value = oldMinutes;
+        secondsInput.value = oldSeconds;
+
+        inputs.forEach(inp => inp.readOnly = true);
+        toggleButtons(['Bfull', 'Bedit', 'Bstop', 'Bplay'], ['Bconfirm', 'Bdeny']);
+    }
+
+    // Validate numeric inputs
+    function validateInputs() {
+        [hoursInput, minutesInput, secondsInput].forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\D/g, '');
+                let val = parseInt(input.value, 10);
+                if (isNaN(val) || val < 0) val = 0;
+                if ((input.id === 'min' || input.id === 'sec') && val > 59) val = 59;
+                input.value = String(val).padStart(2, '0');
+            });
+            input.addEventListener('blur', () => {
+                input.value = input.value.padStart(2, '0');
+            });
+        });
+    }
+
+    // Update display based on total seconds
+    function updateInputs(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        hoursInput.value = String(h).padStart(2, '0');
+        minutesInput.value = String(m).padStart(2, '0');
+        secondsInput.value = String(s).padStart(2, '0');
+        return `${hoursInput.value}:${minutesInput.value}:${secondsInput.value}`;
+    }
+
+    // Hide main interface and show final count
+    function hideFinalInterface() {
+        mainContainer.style.display = 'none';
+        finalCountDisplay.style.display = 'flex';
+        inputs.forEach(input => {
+            input.backgroundColor = '#46FFBE';
+        });
+    }
+
+    // Play a beep sound
+    function playSound(freq, dur = 100) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur / 1000);
+    }
+
+    // Tick function using requestAnimationFrame for precision
+    function tick() {
+        const now = Date.now();
+        const diffMs = Math.max(0, endTime - now);
+        const remSec = Math.ceil(diffMs / 1000);
+
+        if (lastRemainingSec === null || remSec < lastRemainingSec) {
+            if (remSec <= 10 && remSec > 0) {
+                hideFinalInterface();
+                playSound(100);
             }
-            if (tempoRestante <= 10) {
-                tocarSom(100);
-            }
+            lastRemainingSec = remSec;
         }
 
-        const texto = atualizarInputs(tempoRestante);
-        const apenasSeg = texto.split(':')[2];
-        document.getElementById("contagemFinal").textContent = apenasSeg;
+        updateInputs(remSec);
+        finalCountDisplay.textContent = String(remSec % 60).padStart(2, '0');
 
-        if (tempoRestante <= 0) {
-            setTimeout(() => {
-                estadoInicial();
-            }, 2000);
-            document.body.style.backgroundColor = "#46FFBE";
-            document.getElementById("contagemFinal").style.color = "#242424";
-            clearInterval(intervalId);
-            intervalId = null;
-
-            tocarSom(1000, 2000);
+        if (diffMs > 0 && !paused) {
+            timerId = requestAnimationFrame(tick);
+        } else if (!paused) {
+            document.body.style.backgroundColor = '#46FFBE';
+            finalCountDisplay.style.color = '#242424';
+            playSound(1000, 2000);
+            setTimeout(initializeState, 2000);
+            timerId = null;
         }
-    }, 1000);
-}
+    }
 
-function pausar() {
-    pausado = !pausado;
-}
+    // Start the timer
+    function startTimer() {
+        inputs.forEach(inp => {
+            inp.dataset.opacity = 1;
+            inp.style.opacity = 1;
+            inp.readOnly = true;
+        });
+        if (timerId) return;
 
-function parar() {
-    clearInterval(intervalId);
-    intervalId = null;
-    tempoRestante = 0;
-    pausado = false;
-    atualizarInputs(0);
-    estadoInicial();
-}
+        const h = parseInt(hoursInput.value, 10) || 0;
+        const m = parseInt(minutesInput.value, 10) || 0;
+        const s = parseInt(secondsInput.value, 10) || 0;
+        remainingTime = h * 3600 + m * 60 + s;
 
-function atualizarInputs(totalSegundos) {
-    const horas = Math.floor(totalSegundos / 3600);
-    const minutos = Math.floor((totalSegundos % 3600) / 60);
-    const segundos = totalSegundos % 60;
-    const hh = String(horas).padStart(2, '0');
-    const mm = String(minutos).padStart(2, '0');
-    const ss = String(segundos).padStart(2, '0');
+        if (remainingTime <= 0) {
+            initializeState();
+            return;
+        } else {
+            toggleButtons(['Bpause'], ['Bplay']);
+        }
 
-    document.getElementById("hours").value = hh;
-    document.getElementById("min").value = mm;
-    document.getElementById("sec").value = ss;
+        paused = false;
+        endTime = Date.now() + remainingTime * 1000;
+        lastRemainingSec = remainingTime;
+        tick();
+    }
 
-    return `${hh}:${mm}:${ss}`;
-}
+    // Pause or resume the timer
+    function pauseTimer() {
+        if (!timerId) return;
+        paused = !paused;
+        if (paused) {
+            const now = Date.now();
+            remainingTime = Math.ceil((endTime - now) / 1000);
+            cancelAnimationFrame(timerId);
+            toggleButtons(['Bplay'], ['Bpause']);
+        } else {
+            endTime = Date.now() + remainingTime * 1000;
+            tick();
+            toggleButtons(['Bpause'], ['Bplay']);
+        }
+    }
 
-function ocultarInterfaceFinal() {
-    document.getElementById("main").style.display = "none";
-    document.getElementById("contagemFinal").style.display = "flex";
-}
+    // Stop the timer completely
+    function stopTimer() {
+        if (timerId) cancelAnimationFrame(timerId);
+        timerId = null;
+        remainingTime = 0;
+        paused = false;
+        updateInputs(0);
+        initializeState();
+    }
 
-function tocarSom(frequencia, duracao = 100) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    // Attach event listeners
+    editButton.addEventListener('click', enterEditMode);
+    confirmButton.addEventListener('click', confirmEdit);
+    denyButton.addEventListener('click', denyEdit);
+    playButton.addEventListener('click', () => paused ? pauseTimer() : startTimer());
+    pauseButton.addEventListener('click', pauseTimer);
+    stopButton.addEventListener('click', stopTimer);
+    fullscreenButton.addEventListener('click', toggleFullscreen);
 
-    osc.type = 'square';
-    osc.frequency.value = frequencia;
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + duracao / 1000);
-}
-
-document.getElementById('Bedit').addEventListener('click', editar);
-document.getElementById('Bconfirm').addEventListener('click', confirmar);
-document.getElementById('Bdeny').addEventListener('click', negar);
-document.getElementById('Bplay').addEventListener('click', iniciar);
-document.getElementById('Bpause').addEventListener('click', pausar);
-document.getElementById('Bstop').addEventListener('click', parar);
-document.getElementById('Bfull').addEventListener('click', fullscreen);
+    validateInputs();
+    initializeState();
+})();

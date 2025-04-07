@@ -13,14 +13,16 @@ body {
     text-align: center;
 }
 
+.hidden {
+    display: none !important;
+}
+
 h1 {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     width: 2vw;
     font-size: 5vw;
-    text-align: center;
     color: #46FFBE;
-    font-family: 'Orbitron', Arial, sans-serif;
     cursor: default;
 }
 
@@ -43,36 +45,28 @@ input[data-opacity="0.7"] {
     width: 10vw;
     height: 25vh;
     font-size: 5vw;
-    margin: 2vh 0vh 2vh 0vh;
     text-align: center;
     color: #46FFBE;
-    font-family: 'Orbitron', Arial, sans-serif;
     background-color: #242424;
     border: none;
     outline: none;
     box-shadow: none;
-    appearance: none;
-    opacity: 1;
     cursor: text;
+    font-family: 'Orbitron', Arial, sans-serif;
 }
 
 .inpTimer:read-only {
     cursor: not-allowed;
 }
 
-#timer {
+#timer,
+#end {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-#fim {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#contagemFinal {
+#finalCount {
     display: none;
     width: auto;
     margin: 0;
@@ -82,7 +76,6 @@ input[data-opacity="0.7"] {
     height: 100vh;
     text-align: center;
     color: #7cffd1;
-    font-family: 'Orbitron', Arial, sans-serif;
     cursor: default;
     opacity: 1;
 }
@@ -98,18 +91,18 @@ button {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    border: 1px solid #444444;
+    border: 1px solid #444;
     background-color: #242424;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: background-color 0.2s;
     padding: 0;
 }
 
 button:hover {
-    background-color: #333333;
+    background-color: #333;
 }
 
 button i {
@@ -117,23 +110,12 @@ button i {
     color: white;
 }
 
-#Bpause {
-    display: none;
-}
-
-#Bplay {
-    display: flex;
-}
-
-#Bstop {
-    display: flex;
-}
-
 #Bconfirm,
 #Bdeny {
     display: none;
 }
 
-#Bedit {
+#Bconfirm:not(.hidden),
+#Bdeny:not(.hidden) {
     display: flex;
 }
