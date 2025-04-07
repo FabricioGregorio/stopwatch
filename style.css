@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
+body {
+    font-family: 'Orbitron', Arial, sans-serif;
+    background-color: #242424;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+h1 {
+    margin: 0px;
+    padding: 0px;
+    width: 2vw;
+    font-size: 5vw;
+    text-align: center;
+    color: #46FFBE;
+    font-family: 'Orbitron', Arial, sans-serif;
+    cursor: default;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    appearance: none;
+    -moz-appearance: textfield;
+}
+
+input[data-opacity="0.7"] {
+    opacity: 0.7;
+}
+
+.inpTimer {
+    width: 10vw;
+    height: 25vh;
+    font-size: 5vw;
+    margin: 2vh 0vh 2vh 0vh;
+    text-align: center;
+    color: #46FFBE;
+    font-family: 'Orbitron', Arial, sans-serif;
+    background-color: #242424;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    appearance: none;
+    opacity: 1;
+    cursor: text;
+}
+
+.inpTimer:read-only {
+    cursor: not-allowed;
+}
+
+#timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#fim {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#contagemFinal {
+    display: none;
+    width: auto;
+    margin: 0;
+    font-size: 10vw;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    color: #7cffd1;
+    font-family: 'Orbitron', Arial, sans-serif;
+    cursor: default;
+    opacity: 1;
+}
+
+#buttons {
+    gap: 5vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #444444;
+    background-color: #242424;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    padding: 0;
+}
+
+button:hover {
+    background-color: #333333;
+}
+
+button i {
+    font-size: 17px;
+    color: white;
+}
+
+#Bpause {
+    display: none;
+}
+
+#Bplay {
+    display: flex;
+}
+
+#Bstop {
+    display: flex;
+}
+
+#Bconfirm,
+#Bdeny {
+    display: none;
+}
+
+#Bedit {
+    display: flex;
+}

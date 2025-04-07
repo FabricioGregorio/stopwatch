@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="main">
+        <div id="timer">
+            <input type="number" id="hours" class="inpTimer" value="00" min="0" max="23" readonly data-opacity="0.7">
+            <h1>:</h1>
+            <input type="number" id="min" class="inpTimer" value="00" min="0" max="59" readonly data-opacity="0.7">
+            <h1>:</h1>
+            <input type="number" id="sec" class="inpTimer" value="00" min="0" max="59" readonly data-opacity="0.7">
+        </div>
+
+        <div id="buttons">
+            <button id="Bfull"><i class="fa-solid fa-expand"></i></button>
+            <button id="Bedit"><i class="fas fa-pen"></i></button>
+            <button id="Bstop"><i class="fas fa-stop" style="color: #CA3333"></i></button>
+            <button id="Bplay"><i class="fas fa-play" style="color: #46FFBE"></i></button>
+            <button id="Bpause"><i class="fas fa-pause" style="color: #E2AF58"></i></button>
+            <button id="Bdeny"><i class="fa-solid fa-xmark" style="color: #CA3333"></i></button>
+            <button id="Bconfirm"><i class="fa-solid fa-check" style="color: #46FFBE"></i></button>
+        </div>
+    </div>
+
+    <div id="fim">
+        <h2 id="contagemFinal"></h2>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
